@@ -1,0 +1,77 @@
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { UploadCloud, CheckCircle } from "lucide-react";
+import Compressor from "compressorjs";
+
+export default function ImageCompressor() {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [compressedImage, setCompressedImage] = useState(null);
+  const [compressionProgress, setCompressionProgress] = useState(0);
+  const [isCompressing, setIsCompressing] = useState(false);
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setCompressedImage(null);
+    }
+  };
+
+  const handleCompression = () => {
+    if (!selectedImage) return;
+    setIsCompressing(true);
+    setCompressionProgress(10);
+
+    new Compressor(selectedImage, {
+      quality: 0.6,
+      success(result) {
+        setCompressedImage(result);
+        setCompressionProgress(100);
+        setIsCompressing(false);
+      },
+      error(err) {
+        console.error(err.message);
+        setIsCompressing(false);
+      },
+    });
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-100">
+      <Card className="w-full max-w-md p-6 bg-white shadow-lg rounded-2xl">
+        <CardContent className="flex flex-col items-center space-y-4">
+          <h2 className="text-xl font-bold text-gray-800">Image Compressor</h2>
+          <label className="w-full cursor-pointer">
+            <Input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+            <div className="flex items-center justify-center w-full h-32 bg-gray-200 rounded-xl text-gray-600 hover:bg-gray-300 transition-all">
+              {selectedImage ? (
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              ) : (
+                <UploadCloud className="w-8 h-8" />
+              )}
+            </div>
+          </label>
+          <Button onClick={handleCompression} disabled={!selectedImage || isCompressing} className="w-full">
+            {isCompressing ? "Compressing..." : "Compress Image"}
+          </Button>
+          {isCompressing && <Progress value={compressionProgress} className="w-full" />}
+          {compressedImage && (
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Compression Complete!</p>
+              <a
+                href={URL.createObjectURL(compressedImage)}
+                download="compressed-image.jpg"
+                className="text-blue-600 hover:underline"
+              >
+                Download Image
+              </a>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
